@@ -652,13 +652,20 @@ UserInputService.InputEnded:Connect(function(input)
     if input.KeyCode == keybindCode and aimbotConfig.Keybind == "Hold" then holdState = false UpdateActive() end
 end)
 
--- MOBILE CAMERA MOVEMENT (works on touch, no mousemoverel needed)
+-- MOBILE TOUCH CAMERA TRACKER (No PC mouse)
 local function moveCamera(dx, dy)
     local cam = Workspace.CurrentCamera
     if not cam then return end
-    local currentCFrame = cam.CFrame
-    local newCFrame = currentCFrame * CFrame.Angles(math.rad(-dy * 0.15), math.rad(-dx * 0.15), 0)
-    cam.CFrame = newCFrame
+    
+    -- get current camera rotation
+    local rx, ry, rz = cam.CFrame:ToEulerAnglesYXZ()
+    
+    -- apply new rotation based on target delta (inverted for mobile)
+    local newYaw = ry - math.rad(dx * 0.1)
+    local newPitch = math.clamp(rx - math.rad(dy * 0.1), -math.rad(80), math.rad(80))
+    
+    -- set camera CFrame
+    cam.CFrame = CFrame.new(cam.CFrame.Position) * CFrame.Angles(newPitch, newYaw, rz)
 end
 
 local AimbotInstance = Aimbot.new({
@@ -692,7 +699,7 @@ local AimbotInstance = Aimbot.new({
     end,
     GetShooterPos = function() return Workspace.CurrentCamera.CFrame.Position end,
     GetCameraOrigin = function() local cam = Workspace.CurrentCamera return Vector2.new(cam.ViewportSize.X / 2, cam.ViewportSize.Y / 2) end,
-    MoveCamera = function(dx, dy) moveCamera(dx, dy) end, -- mobile camera hook
+    MoveCamera = function(dx, dy) moveCamera(dx, dy) end,
     CheckHitbox = function(origin, part, model)
         local params = RaycastParams.new()
         params.FilterType = Enum.RaycastFilterType.Include
@@ -710,9 +717,9 @@ RunService.RenderStepped:Connect(function(dt) AimbotInstance:Update(dt) end)
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-    Name = "kiciahook v3 | aimbot",
+    Name = "kiciahook | mobile",
     LoadingTitle = "kiciahook",
-    LoadingSubtitle = "mobile rebuild",
+    LoadingSubtitle = "mobile",
     ConfigurationSaving = { Enabled = true, FolderName = "KiciaAimbot", FileName = "config" },
     KeySystem = false,
 })
@@ -867,4 +874,4 @@ FovTab:CreateSlider({
 })
 
 Rayfield:LoadConfiguration()
-Rayfield:Notify({ Title = "kiciahook", Content = "mobile aimbot loaded", Duration = 5, Image = 4483362458 })
+Rayfield:Notify({ Title = "kiciahook", Content = "mobile loaded", Duration = 5, Image = 4483362458 })
